@@ -1497,7 +1497,14 @@ static int gc5035_set_fmt(struct v4l2_subdev *sd,
 
 	mutex_lock(&gc5035->mutex);
 	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
-		*v4l2_subdev_get_try_format(sd, sd_state, fmt->pad) = fmt->format;
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
+                *v4l2_subdev_get_try_format(sd, cfg, fmt->pad) = fmt->format;
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0)
+                 *v4l2_subdev_get_try_format(sd, sd_state, fmt->pad) = fmt->format;
+#else
+                 *v4l2_subdev_state_get_format(sd_state, fmt->pad) = fmt->format;
+#endif
+
 	} else {
 		gc5035->cur_mode = mode;
 		h_blank = mode->hts_def - mode->width;
@@ -1522,7 +1529,16 @@ static int gc5035_get_fmt(struct v4l2_subdev *sd,
 
 	mutex_lock(&gc5035->mutex);
 	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
-		fmt->format = *v4l2_subdev_get_try_format(sd, sd_state, fmt->pad);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
+                  fmt->format = *v4l2_subdev_get_try_format(&ov01a10->sd, cfg,
+                                                        fmt->pad);
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0)
+                fmt->format = *v4l2_subdev_get_try_format(&ov01a10->sd,
+                                                           sd_state, fmt->pad);
+#else
+                 fmt->format = *v4l2_subdev_state_get_format(
+                                                           sd_state, fmt->pad);
+#endif
 	} else {
 		fmt->format.width = mode->width;
 		fmt->format.height = mode->height;
@@ -1685,7 +1701,7 @@ static int gc5035_runtime_suspend(struct device *dev)
 
 	return 0;
 }
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0)
 static int gc5035_entity_init_cfg(struct v4l2_subdev *subdev,
 			        struct v4l2_subdev_state *sd_state)
 {
@@ -1701,7 +1717,7 @@ static int gc5035_entity_init_cfg(struct v4l2_subdev *subdev,
 
 	return 0;
 }
-
+#endif
 static const struct dev_pm_ops gc5035_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
 				pm_runtime_force_resume)
@@ -1714,7 +1730,9 @@ static const struct v4l2_subdev_video_ops gc5035_video_ops = {
 };
 
 static const struct v4l2_subdev_pad_ops gc5035_pad_ops = {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0)
 	.init_cfg = gc5035_entity_init_cfg,
+#endif
 	.enum_mbus_code = gc5035_enum_mbus_code,
 	.enum_frame_size = gc5035_enum_frame_sizes,
 	.get_fmt = gc5035_get_fmt,
