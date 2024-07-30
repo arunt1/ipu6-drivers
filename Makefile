@@ -87,7 +87,7 @@ export CONFIG_VIDEO_HI556 = m
 
 ifeq ($(call version_lt,$(KERNEL_VERSION),$(KV_OV2740)),true)
 export CONFIG_VIDEO_OV2740 = m
-export CONFIG_VIDEO_GC5035 = m
+#export CONFIG_VIDEO_GC5035 = m
 endif
 
 ifeq ($(call version_lt,$(KERNEL_VERSION),$(KV_OV05C10)),false)
